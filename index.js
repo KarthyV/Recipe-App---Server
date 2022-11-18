@@ -16,7 +16,7 @@ app.get("/", (req, res) => {
 
 app.use("/recipes", recipeRoutes);
 
-const PORT = 8000 || process.env.PORT;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log("listening on port " + PORT);
 });
