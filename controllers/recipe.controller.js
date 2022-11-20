@@ -40,7 +40,9 @@ const updateRecipeById = async (req, res) => {
   const { id } = req.params;
   try {
     const data = req.body;
-    const recipeUpdate = await Recipes.findByIdAndUpdate(id, { ...data });
+    console.log(data);
+    const recipeUpdate = await Recipes.findByIdAndUpdate(id, data);
+    await recipeUpdate.save();
     res.status(201).send(recipeUpdate);
   } catch (error) {
     res.status(404).send(error);
