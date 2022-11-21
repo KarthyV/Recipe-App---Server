@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import recipeRoutes from "./routes/recipe.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import cors from "cors";
 
 dotenv.config();
@@ -17,6 +18,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/recipes", recipeRoutes);
+
+app.use("/users", userRoutes);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
