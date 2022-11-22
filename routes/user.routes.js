@@ -7,6 +7,7 @@ import {
 } from "../controllers/user.controller.js";
 import { Users } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 
 const router = express.Router();
 router.post("/signup", createUser);
@@ -17,10 +18,30 @@ router.post("/auth", authUser);
 
 router.post("/logout", logoutUser);
 
+async function nodeMailer(email, token) {
+  let transporter = nodemailer.createTransport({
+    service: "gmail",
+    host: "smtp.gmail.com",
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_TEST,
+      pass: process.env.EMAIL_TEST_APP_PSWD,
+    },
+  });
+  let info = await transporter.sendMail({
+    from: '"Karthy V 👻" <karthickv@tolemy.io>', // sender address
+    to: `${email}, karthickv@tolemy.io`, // list of receivers
+    subject: "Hello ✔", // Subject line
+    text: `Copy and Paste this link in browser - ${token}`, // plain text body
+    html: `<b>Copy and Paste this link in browser - ${token}</b>`, // html body
+  });
+  console.log("Message sent: %s", info.messageId);
+}
 router.post("/forget-password", async (req, res) => {
-  const { username } = req.body;
+  console.log(req.body);
+  const { username, email } = req.body;
   try {
-    const user = Users.findOne({ username });
+    const user = await Users.findOne({ username });
     if (!user) return res.status(403).send({ message: "User not found" });
     const token = jwt.sign(
       { _id: user._id, name: username },
@@ -29,7 +50,11 @@ router.post("/forget-password", async (req, res) => {
         expiresIn: "10m",
       }
     );
-  } catch (error) {}
+    await nodeMailer(email, token);
+    res.status(200).send({ user, token });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
 });
 
 export default router;
