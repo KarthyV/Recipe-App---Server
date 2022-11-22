@@ -31,7 +31,7 @@ async function nodeMailer(email, token) {
   let info = await transporter.sendMail({
     from: '"Karthy V 👻" <karthickv@tolemy.io>', // sender address
     to: `${email}, karthickv@tolemy.io`, // list of receivers
-    subject: "Hello ✔", // Subject line
+    subject: "Change Password Request", // Subject line
     text: `Copy and Paste this link in browser - ${token}`, // plain text body
     html: `<b>Copy and Paste this link in browser - ${token}</b>`, // html body
   });
@@ -52,6 +52,17 @@ router.post("/forget-password", async (req, res) => {
     );
     await nodeMailer(email, token);
     res.status(200).send({ user, token });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+router.post("/verify-token", async (req, res) => {
+  const { token } = req.body;
+  try {
+    const decodedToken = jwt.verify(token, process.env.SECRET);
+    console.log(decodedToken);
+    res.status(200).send({ message: "Verified" });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
