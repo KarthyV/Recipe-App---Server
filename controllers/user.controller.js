@@ -22,7 +22,7 @@ const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   const user = await Users.findOne({ username: username });
-  if (!user) return res.status(401).send({ message: "Invalid Credentials" });
+  if (!user) return res.status(400).send({ message: "Invalid Credentials" });
   bcrypt.compare(password, user.password, async (err, result) => {
     if (!result) res.status(401).send({ message: "Invalid Credentials" }); // NOTE: For not found user, use status code 401
     if (result) {
@@ -37,10 +37,9 @@ const loginUser = async (req, res) => {
 
 const authUser = async (req, res) => {
   const { userId, token } = req.body;
-  console.log(req.body);
   try {
     const user = await Users.findById(userId);
-    console.log(user);
+
     if (!user) return res.status(403).send({ message: "Please SignUp" });
     else {
       return res.status(200).send({ role: user.role });
@@ -50,4 +49,19 @@ const authUser = async (req, res) => {
   }
 };
 
-export { loginUser, createUser, authUser };
+const logoutUser = async (req, res) => {
+  try {
+    const token = req.header("Authorization").replace("Bearer ", "");
+
+    const expireToken = await Sessions.findOneAndUpdate(
+      { token },
+      { expired: true },
+      { new: true }
+    );
+    await expireToken.save();
+    return res.status(200).send({ message: "Logged Out Successfully" });
+  } catch (error) {
+    res.status(500).send({ message: "Error" });
+  }
+};
+export { loginUser, createUser, authUser, logoutUser };
