@@ -8,6 +8,9 @@ import {
 import { Users } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { authorizePasswordChange } from "../middlewares/auth.js";
+import bcrypt from "bcrypt";
+import { Sessions } from "../models/session.model.js";
 
 const router = express.Router();
 router.post("/signup", createUser);
@@ -33,7 +36,7 @@ async function nodeMailer(email, token) {
     to: `${email}, karthickv@tolemy.io`, // list of receivers
     subject: "Change Password Request", // Subject line
     text: `Copy and Paste this link in browser - ${token}`, // plain text body
-    html: `<b>Copy and Paste this link in browser - ${token}</b>`, // html body
+    html: `<b>Copy and Paste this link in browser within 10mins - <mark>${token}</mark></b>`, // html body
   });
   console.log("Message sent: %s", info.messageId);
 }
@@ -67,5 +70,33 @@ router.post("/verify-token", async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 });
+
+router.post(
+  "/change-password/:id",
+  authorizePasswordChange,
+  async (req, res) => {
+    const { password } = req.body;
+    const { id } = req.params;
+    console.log(req.body);
+    try {
+      await bcrypt.hash(password, 10, async (err, hashedPassword) => {
+        const user = await Users.findByIdAndUpdate(id, {
+          password: hashedPassword,
+        });
+        console.log(user);
+        const token = jwt.sign(
+          { _id: user._id + Date.now() },
+          process.env.SECRET
+        );
+        const sessionData = new Sessions({ userId: user._id, token });
+        await user.save();
+        await sessionData.save();
+        res.status(200).send(sessionData);
+      });
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  }
+);
 
 export default router;

@@ -38,4 +38,16 @@ const authorizeUser = async (req, res, next) => {
   }
 };
 
-export { authorizeAdmin, authorizeUser };
+const authorizePasswordChange = async (req, res, next) => {
+  try {
+    const userToken = req.header("Authorization").replace("Bearer ", "");
+    const decodedToken = jwt.verify(userToken, process.env.SECRET);
+    if (decodedToken) {
+      next();
+    } else {
+      return res.status(401).send({ message: "Not Authorized" });
+    }
+  } catch (error) {}
+};
+
+export { authorizeAdmin, authorizeUser, authorizePasswordChange };
